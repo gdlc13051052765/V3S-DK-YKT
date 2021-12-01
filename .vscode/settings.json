@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "calucationfile.h": "c",
+        "CalucationFile.H": "cpp",
+        "externvariabledef.h": "c",
+        "debug_print.h": "c"
+    }
+}
