@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "mydefine.h"
 #include <unistd.h>
+#include "sysTime.h"
 
 uint16_t	MainCode ;//站点号
 uint16_t	UdpCode = 9000;//UDP端口号
@@ -42,7 +43,7 @@ uint8_t		bitUpdateParameter=1;
 uint8_t		DownLoadPragamSymbl[6];//需要下载程序的标识数据,0xb0--0xb5,需要下载
 uint8_t		LoadProgamReDatas[6] ;
 uint8_t		ConsumCase=0;
-uint8_t		ConsumMode=DEFAULT_CONSUM_MODE;//消费方式
+uint8_t		ConsumMode;//消费方式
 
 uint8_t		T3_TimeCount=0;
 uint8_t		bitHaveLedError=0;
@@ -63,9 +64,6 @@ uint32_t	Sys_SumConsumMoney=0;
 uint8_t		PurseUsingNum;//当前钱包号
 uint8_t		SelectPurseNum;//应用钱包起始号
 /////////////////////系统参数///////////////
-uint8_t		CardBatchEnable[32];//批次是否有效
-uint8_t		CommEncryptKey[8];
-uint8_t		PurseEnable[10];//钱包使能
 uint8_t		CardMinBalance[3];//卡底金
 uint8_t		DayLimetMoney[3];//下载的日限额
 uint8_t		CardEnableMonths;//黑名单有效月数
@@ -130,12 +128,12 @@ uint8_t		CardSerialNumBak[4];
 uint8_t		CardPrinterNum[4];//印刷编号
 
 //一卡通公用信息
-uint8_t		MatchCode[4]={0x12,0x34,0x56,0x78}; //UserCode[4];//用户代码
+//uint8_t		MatchCode[4]={0x12,0x34,0x56,0x78}; //UserCode[4];//用户代码
 uint8_t		CardIdentity;//身份
 uint8_t		CardBatch;//卡批次
 uint32_t	Limit_DayMoney;//日限额
 uint32_t	Max_ConsumMoney;//单笔限额
-uint8_t   	Card_Rebate;//折扣
+//uint8_t   	Card_Rebate;//折扣
 uint8_t		PursesSector[10];//钱包文件标识索引
 uint8_t     nameBuf[16];//名字
 
@@ -149,7 +147,7 @@ uint8_t		CardDayConsumCount=0;//累计次数    //CardPurseDayCount
 uint8_t		PinCheckSta; //PIN校验状态
 uint8_t   	Sys_PinCode[3]={0x12,0x34,0x56}; //系统PIN码
 uint8_t		PurseContrlNum[2];//卡交易号
-uint16_t		PosConsumCount=0;//POS的消费流水号
+uint16_t	PosConsumCount=0;//POS的消费流水号
 uint8_t		CardConsumTime[6];//消费时间，防止MAC校验失败
 uint8_t		Mac2Bak[4];//MAC2
 uint8_t		WriteCardSta=0;//写卡错误状态
@@ -175,9 +173,9 @@ uint8_t 	NetCardDatas[22];
 uint8_t 	TypeA_Sort;//M1=0/CPU=1
 uint8_t 	Bak_Sort;
 
-uint8_t	    CardKeyCode[6];//读卡密码
-uint8_t	    CalCardKey[8];//卡密钥
-uint8_t	    CardSector;//公共区的扇区号 
+//uint8_t	    CardKeyCode[6];//读卡密码
+//uint8_t	    CalCardKey[8];//卡密钥
+//uint8_t	    CardSector;//公共区的扇区号 
 uint8_t	    PinCode[3];
 uint8_t	    Limit_MoneySign = 0xff;
 uint8_t	    DaySumMoneyDatasBak[28];//欲覆盖的日累计消费额的数据备份

@@ -18,7 +18,8 @@ typedef struct
 {
   char* version ;//版本号
   int   maincode ;
-  char* ipaddr; 
+  char* localIpaddr; 
+  char* remoteIpaddr; 
   int   port;
   char* matchCode;
   char* cardKeyCode;
@@ -31,6 +32,8 @@ typedef struct
   int   consumeMode ;
   int   cardSector;//公共扇区
   int   cardEnableMonths;//黑名单有效期
+  int   cardRebate;//卡折扣
+  int   autoModeConsumeMoney;//自动模式消费金额
 }C_DevMsgSt;
 
 
@@ -42,6 +45,7 @@ struct	sRecordStruct
 	int  CurrentConsumMoney;
 	uint32_t  ConsumeTime;
 	char recoedDatas[80];		
+  char name[80];		
 };
 
 
@@ -224,6 +228,17 @@ int sqlite_update_dayLimetMoney_config_db(int dayLimetMoney);
 * 创建时间： 2021-05-25 //  
 ==================================================================================*/
 int sqlite_update_commEncryptKey_config_db(char *commEncryptKey);
+
+/*==================================================================================
+* 函 数 名： sqlite_update_cardEnableMonths_config_db
+* 参    数： 
+* 功能描述:  修改配置数据库黑名单有效期
+* 返 回 值： None
+* 备    注： 修改成功返回0
+* 作    者： lc
+* 创建时间： 2021-05-25 //
+==================================================================================*/
+int sqlite_update_cardEnableMonths_config_db(int cardEnableMonths);
 
 
 void malloc_devMsgSt(C_DevMsgSt pdev);

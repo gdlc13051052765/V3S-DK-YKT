@@ -3,6 +3,8 @@
         "calucationfile.h": "c",
         "CalucationFile.H": "cpp",
         "externvariabledef.h": "c",
-        "debug_print.h": "c"
+        "debug_print.h": "c",
+        "variabledef.h": "c",
+        "udp_data_analyse.h": "c"
     }
 }

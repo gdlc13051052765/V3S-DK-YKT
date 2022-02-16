@@ -33,7 +33,8 @@ uint32_t blknumberId = 0;
 
 static char version[] = "YKT-VER-0.0.1";//版本号
 static int  maincode ;
-static char ipaddr[] = "192.168.1.100"; 
+static char localIpaddr[] = "192.168.3.33"; 
+static char remoteIpaddr[] = "192.168.3.28"; 
 static int  port = 9000;
 static char MatchCode[] = "12345678";
 static char CardKeyCode[] = "12345678";
@@ -45,8 +46,9 @@ static char CardBatchEnable[] = "123456788";
 static char PurseEnable[] = "12345678";
 static int  consumeMode = 1;
 static int  cardSector = 3;//公共扇区
-
-
+static int  cardEnableMonths = 99;//黑名单有效月
+static int  CardRebate = 100;//卡折扣
+static int 	AutoModeConsumeMoney = 200;//自动模式消费金额
 char *code;
 
 
@@ -91,7 +93,7 @@ int sqlite_create_config_db(void)
   else 
     printf_debug("You have opened a sqlite3 database named config_db successfully!\n");
   //
-  char *sql = "create table config_db (version char, maincode INTEGER, ipaddr char, port INTEGER, MatchCode char, CardKeyCode char, CalCardKey char, CardMinBalance INTEGER, DayLimetMoney INTEGER, CommEncryptKey char, CardBatchEnable char, PurseEnable char, consumeMode INTEGER, cardSector INTEGER);";
+  char *sql = "create table config_db (version char, maincode INTEGER, localipaddr char, remoteipaddr char, port INTEGER, MatchCode char, CardKeyCode char, CalCardKey char, CardMinBalance INTEGER, DayLimetMoney INTEGER, CommEncryptKey char, CardBatchEnable char, PurseEnable char, consumeMode INTEGER, cardSector INTEGER, cardEnableMonths INTEGER, CardRebate INTEGER, AutoModeMoney INTEGER);";
   sqlite3_exec(config_db,sql,NULL,NULL,&zErrMsg);
   sqlite3_close(config_db);
 
@@ -102,7 +104,7 @@ int sqlite_create_config_db(void)
     sqlite3_close(config_db);
     return err;
   }
-  sprintf(tempdata, "insert into config_db values('%s',%d,'%s',%d,'%s','%s','%s',%d,%d,'%s','%s','%s',%d,%d);", version, maincode,ipaddr,port,MatchCode,CardKeyCode,CalCardKey,CardMinBalance,DayLimetMoney,CommEncryptKey,CardBatchEnable,PurseEnable,consumeMode,cardSector);
+  sprintf(tempdata, "insert into config_db values('%s',%d,'%s','%s',%d,'%s','%s','%s',%d,%d,'%s','%s','%s',%d,%d,%d,%d,%d);", version, maincode,localIpaddr,remoteIpaddr,port,MatchCode,CardKeyCode,CalCardKey,CardMinBalance,DayLimetMoney,CommEncryptKey,CardBatchEnable,PurseEnable,consumeMode,cardSector,cardEnableMonths,CardRebate,AutoModeConsumeMoney);
 
   printf_debug("config_db insertdata = %s\n", tempdata);
   err = sqlite3_exec(config_db,tempdata,NULL,NULL,&zErrMsg);
@@ -119,7 +121,8 @@ int sqlite_create_config_db(void)
 * 作    者： lc
 * 创建时间： 2021-05-25 
 ==================================================================================*/
-static  char pIpAddr[100];
+static  char localIpAddrBuf[100];
+static  char remoteIpAddrBuf[100];
 static  char pMatchCode[100];
 static  char pCardKeyCode[100];
 static  char pCalCardKey[100];
@@ -154,36 +157,44 @@ C_DevMsgSt sqlite_read_devMsg_from_config_db()
     sqlite3_close_v2(config_db);
     return pdev;
   }
-  for(i=0;i<(nrow+1)*ncolumn;i++)
-  {
-    printf_debug("azResult[%d]=%s\n",i,azResult[i]);
-  }
-  hardNum = 13;
+//   for(i=0;i<(nrow+1)*ncolumn;i++)
+//   {
+//     printf_debug("azResult[%d]=%s\n",i,azResult[i]);
+//   }
+  hardNum = 18;
   memcpy(gloalVersion, azResult[hardNum], strlen(azResult[hardNum]));
   pdev.version = gloalVersion;
   pdev.maincode = atoi(azResult[hardNum+1]);
-  memcpy(pIpAddr, azResult[hardNum+2], strlen(azResult[hardNum+2]));
-  pdev.ipaddr = pIpAddr;
-  pdev.port = atoi(azResult[hardNum+3]);
-  memcpy(pMatchCode, azResult[hardNum+4], strlen(azResult[hardNum+4]));
+  memcpy(localIpAddrBuf, azResult[hardNum+2], strlen(azResult[hardNum+2]));
+  pdev.localIpaddr = localIpAddrBuf;
+  memcpy(remoteIpAddrBuf, azResult[hardNum+3], strlen(azResult[hardNum+3]));
+  pdev.remoteIpaddr = remoteIpAddrBuf;
+
+  pdev.port = atoi(azResult[hardNum+4]);
+  memcpy(pMatchCode, azResult[hardNum+5], strlen(azResult[hardNum+5]));
   pdev.matchCode = pMatchCode;
-  memcpy(pCardKeyCode, azResult[hardNum+5], strlen(azResult[hardNum+5]));
+  memcpy(pCardKeyCode, azResult[hardNum+6], strlen(azResult[hardNum+6]));
   pdev.cardKeyCode = pCardKeyCode;
-  memcpy(pCalCardKey, azResult[hardNum+6], strlen(azResult[hardNum+6]));
+  memcpy(pCalCardKey, azResult[hardNum+7], strlen(azResult[hardNum+7]));
   pdev.calCardKey = pCalCardKey;
-  pdev.cardMinBalance = atoi(azResult[hardNum+7]);
-  pdev.dayLimetMoney = atoi(azResult[hardNum+8]);
-  memcpy(pCommEncryptKey, azResult[hardNum+9], strlen(azResult[hardNum+9]));
+  pdev.cardMinBalance = atoi(azResult[hardNum+8]);
+  pdev.dayLimetMoney = atoi(azResult[hardNum+9]);
+  memcpy(pCommEncryptKey, azResult[hardNum+10], strlen(azResult[hardNum+10]));
   pdev.commEncryptKey = pCommEncryptKey;
-  memcpy(pCardBatchEnable, azResult[hardNum+10], strlen(azResult[hardNum+10]));
+  memcpy(pCardBatchEnable, azResult[hardNum+11], strlen(azResult[hardNum+11]));
   pdev.cardBatchEnable = pCardBatchEnable;
-  memcpy(pPurseEnable, azResult[hardNum+11], strlen(azResult[hardNum+11]));
+  memcpy(pPurseEnable, azResult[hardNum+12], strlen(azResult[hardNum+12]));
   pdev.purseEnable = pPurseEnable;
-  pdev.consumeMode = atoi(azResult[hardNum+12]);
+  pdev.consumeMode = atoi(azResult[hardNum+13]);//消费模式
+  pdev.cardSector = atoi(azResult[hardNum+14]);//公共扇区
+  pdev.cardEnableMonths = atoi(azResult[hardNum+15]);//黑名单有效月
+  pdev.cardRebate = atoi(azResult[hardNum+16]);//卡折扣
+  pdev.autoModeConsumeMoney = atoi(azResult[hardNum+17]);//自动模式消费金额
 
   printf_debug("version = %s \n", pdev.version);
   printf_debug("maincode = %d \n", pdev.maincode);
-  printf_debug("ipaddr = %s \n", pdev.ipaddr);
+  printf_debug("localipaddr = %s \n", pdev.localIpaddr);
+  printf_debug("remoteipaddr = %s \n", pdev.remoteIpaddr);
   printf_debug("port = %d \n", pdev.port);
   printf_debug("MatchCode = %s \n", pdev.matchCode);
   printf_debug("CardKeyCode = %s \n", pdev.cardKeyCode);
@@ -194,6 +205,10 @@ C_DevMsgSt sqlite_read_devMsg_from_config_db()
   printf_debug("CardBatchEnable = %s \n", pdev.cardBatchEnable);
   printf_debug("PurseEnable = %s \n", pdev.purseEnable);
   printf_debug("consumeMode = %d \n", pdev.consumeMode);
+  printf_debug("cardSector = %d \n", pdev.cardSector );
+  printf_debug("cardEnableMonths = %d \n", pdev.cardEnableMonths);
+  printf_debug("CardRebate = %d \n", pdev.cardRebate);
+  printf_debug("autoModeConsumeMoney = %d \n", pdev.autoModeConsumeMoney);
 
   sqlite3_free_table(azResult);
   sqlite3_free(zErrMsg);
@@ -213,7 +228,7 @@ C_DevMsgSt sqlite_read_devMsg_from_config_db()
 ==================================================================================*/
 int sqlite_update_matchCode_config_db(char *snbuf)
 {
-  int err,codeNum;
+  int err;
   char tempdata[500];
   sqlite3 *config_db =NULL;
 
@@ -225,7 +240,7 @@ int sqlite_update_matchCode_config_db(char *snbuf)
     sqlite3_close_v2(config_db);
     return err;
   }
-  codeNum = atoi(code);
+  
   sprintf(tempdata, "update config_db set MatchCode='%s'", snbuf);//
   printf_debug("tempdata = %s \n", tempdata);
   err = sqlite3_exec(config_db, tempdata, NULL, NULL, &zErrMsg);
@@ -244,7 +259,7 @@ int sqlite_update_matchCode_config_db(char *snbuf)
 ==================================================================================*/
 int sqlite_update_cardKeyCode_config_db(char *snbuf)
 {
-  int err,codeNum;
+  int err;
   char tempdata[500];
   sqlite3 *config_db =NULL;
 
@@ -256,7 +271,7 @@ int sqlite_update_cardKeyCode_config_db(char *snbuf)
     sqlite3_close_v2(config_db);
     return err;
   }
-  codeNum = atoi(code);
+  
   sprintf(tempdata, "update config_db set CardKeyCode='%s'", snbuf);//
   printf_debug("tempdata = %s \n", tempdata);
   err = sqlite3_exec(config_db, tempdata, NULL, NULL, &zErrMsg);
@@ -275,7 +290,7 @@ int sqlite_update_cardKeyCode_config_db(char *snbuf)
 ==================================================================================*/
 int sqlite_update_cardSector_config_db(int cardSector)
 {
-  int err,codeNum;
+  int err;
   char tempdata[500];
   sqlite3 *config_db =NULL;
 
@@ -287,7 +302,7 @@ int sqlite_update_cardSector_config_db(int cardSector)
     sqlite3_close_v2(config_db);
     return err;
   }
-  codeNum = atoi(code);
+  
   sprintf(tempdata, "update config_db set cardSector=%d", cardSector);//
   printf_debug("tempdata = %s \n", tempdata);
   err = sqlite3_exec(config_db, tempdata, NULL, NULL, &zErrMsg);
@@ -306,7 +321,7 @@ int sqlite_update_cardSector_config_db(int cardSector)
 ==================================================================================*/
 int sqlite_update_CalCardKey_config_db(char *CalCardKey)
 {
-  int err,codeNum;
+  int err;
   char tempdata[500];
   sqlite3 *config_db =NULL;
 
@@ -318,7 +333,7 @@ int sqlite_update_CalCardKey_config_db(char *CalCardKey)
     sqlite3_close_v2(config_db);
     return err;
   }
-  codeNum = atoi(code);
+  
   sprintf(tempdata, "update config_db set CalCardKey='%s'", CalCardKey);//
   printf_debug("tempdata = %s \n", tempdata);
   err = sqlite3_exec(config_db, tempdata, NULL, NULL, &zErrMsg);
@@ -337,7 +352,7 @@ int sqlite_update_CalCardKey_config_db(char *CalCardKey)
 ==================================================================================*/
 int sqlite_update_cardBatchEnable_config_db(char *cardBatchEnable)
 {
-  int err,codeNum;
+  int err;
   char tempdata[500];
   sqlite3 *config_db =NULL;
 
@@ -349,7 +364,7 @@ int sqlite_update_cardBatchEnable_config_db(char *cardBatchEnable)
     sqlite3_close_v2(config_db);
     return err;
   }
-  codeNum = atoi(code);
+  
   sprintf(tempdata, "update config_db set CardBatchEnable='%s'", cardBatchEnable);//
   printf_debug("tempdata = %s \n", tempdata);
   err = sqlite3_exec(config_db, tempdata, NULL, NULL, &zErrMsg);
@@ -368,7 +383,7 @@ int sqlite_update_cardBatchEnable_config_db(char *cardBatchEnable)
 ==================================================================================*/
 int sqlite_update_commEncryptKey_config_db(char *commEncryptKey)
 {
-  int err,codeNum;
+  int err;
   char tempdata[500];
   sqlite3 *config_db =NULL;
 
@@ -380,7 +395,8 @@ int sqlite_update_commEncryptKey_config_db(char *commEncryptKey)
     sqlite3_close_v2(config_db);
     return err;
   }
-  codeNum = atoi(code);
+  printf_debug("ykt_config open ok = %s\n", commEncryptKey);
+  
   sprintf(tempdata, "update config_db set CommEncryptKey='%s'", commEncryptKey);//
   printf_debug("tempdata = %s \n", tempdata);
   err = sqlite3_exec(config_db, tempdata, NULL, NULL, &zErrMsg);
@@ -399,7 +415,7 @@ int sqlite_update_commEncryptKey_config_db(char *commEncryptKey)
 ==================================================================================*/
 int sqlite_update_cardMinBalance_config_db(int cardMinBalance)
 {
-  int err,codeNum;
+  int err;
   char tempdata[500];
   sqlite3 *config_db =NULL;
 
@@ -411,8 +427,39 @@ int sqlite_update_cardMinBalance_config_db(int cardMinBalance)
     sqlite3_close_v2(config_db);
     return err;
   }
-  codeNum = atoi(code);
+ 
   sprintf(tempdata, "update config_db set CardMinBalance=%d", cardMinBalance);//
+  printf_debug("tempdata = %s \n", tempdata);
+  err = sqlite3_exec(config_db, tempdata, NULL, NULL, &zErrMsg);
+  sqlite3_close_v2(config_db);
+  return err;
+}
+
+/*==================================================================================
+* 函 数 名： sqlite_update_cardEnableMonths_config_db
+* 参    数： 
+* 功能描述:  修改配置数据库黑名单有效期
+* 返 回 值： None
+* 备    注： 修改成功返回0
+* 作    者： lc
+* 创建时间： 2021-05-25 //
+==================================================================================*/
+int sqlite_update_cardEnableMonths_config_db(int cardEnableMonths)
+{
+  int err;
+  char tempdata[500];
+  sqlite3 *config_db =NULL;
+
+  /* 创建基础信息数据库 */
+  //err = sqlite3_open("/home/meican/base_config.db",&config_db);
+  err = sqlite3_open_v2("/home/meican/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
+  if(err) {
+    printf_debug("Can't open database: %s\n", sqlite3_errmsg(config_db));
+    sqlite3_close_v2(config_db);
+    return err;
+  }
+ 
+  sprintf(tempdata, "update config_db set cardEnableMonths=%d", cardEnableMonths);//
   printf_debug("tempdata = %s \n", tempdata);
   err = sqlite3_exec(config_db, tempdata, NULL, NULL, &zErrMsg);
   sqlite3_close_v2(config_db);
@@ -430,7 +477,7 @@ int sqlite_update_cardMinBalance_config_db(int cardMinBalance)
 ==================================================================================*/
 int sqlite_update_dayLimetMoney_config_db(int dayLimetMoney)
 {
-  int err,codeNum;
+  int err;
   char tempdata[500];
   sqlite3 *config_db =NULL;
 
@@ -442,7 +489,7 @@ int sqlite_update_dayLimetMoney_config_db(int dayLimetMoney)
     sqlite3_close_v2(config_db);
     return err;
   }
-  codeNum = atoi(code);
+  
   sprintf(tempdata, "update config_db set DayLimetMoney=%d", dayLimetMoney);//
   printf_debug("tempdata = %s \n", tempdata);
   err = sqlite3_exec(config_db, tempdata, NULL, NULL, &zErrMsg);
@@ -796,7 +843,7 @@ int sqlite3_consume_open_db(void)
 	/* 创建未采记录表 */
 	//recordIdb 一直累加不清零
 	//消费时间年/月/日
-	char *sql = "create table consume (id int primary key,tag int,money int,time char,datas char);" ;
+	char *sql = "create table consume (id INTEGER,tag INTEGER,money INTEGER,time INTEGER,datas char,name char);" ;
 	sqlite3_exec(recod_db,sql,NULL,NULL,&zErrMsg);
 	//sqlite3_close(recod_db);
 	return len;
@@ -826,7 +873,7 @@ int sqlite3_consume_insert_db(struct sRecordStruct sRt)
 	/*插入数据	*/
 	printf_debug("sRt.CurrentConsumMoney==%d\n",sRt.CurrentConsumMoney);
 
-	sprintf(tempdata,"insert into consume values(%d,%d,%d,%d,'%s');",sRt.recordId,sRt.recordTag, sRt.CurrentConsumMoney ,sRt.ConsumeTime,sRt.recoedDatas);
+	sprintf(tempdata,"insert into consume values(%d,%d,%d,%d,'%s','%s');",sRt.recordId,sRt.recordTag, sRt.CurrentConsumMoney ,sRt.ConsumeTime,sRt.recoedDatas,sRt.name);
 	printf_debug("tempdata= %s\n", tempdata);
 	sqlite3_exec(recod_db,tempdata,NULL,NULL,&zErrMsg);
 	sqlite3_close(recod_db);
@@ -956,7 +1003,7 @@ uint32_t  sqlite3_consume_query_RecordIndex_db(uint8_t bit)
 				while(sqlite3_step(stmt) == SQLITE_ROW ) 
 				{	
 					// 取出第0列字段的值ID号
-					index= sqlite3_column_int(stmt, 0);	
+					index = sqlite3_column_int(stmt, 0);	
 				}
 			}
 			sqlite3_finalize(stmt);
@@ -1035,7 +1082,7 @@ struct	sRecordStruct sqlite3_consume_query_collectedRecord_db(uint32_t daytime)
 }
 
 //查询某日--某日的消费记录总额跟笔数
-struct	sRecordMoneyStruct sqlite3_consume_query_daymoney_db(char *daytime1,char *daytime2)
+struct	sRecordMoneyStruct sqlite3_consume_query_daymoney_db(char *daytime1, char *daytime2)
 {
 	char tempdata[200];
 	int i,len;
@@ -1081,10 +1128,10 @@ struct	sRecordMoneyStruct sqlite3_consume_query_daymoney_db(char *daytime1,char 
 		}
 		sqlite3_finalize(stmt);
 		RecordStr.status = 1;//查询成功
-		printf_debug("RecordStr.RecordToalNumber =%d, RecordStr.RecordToalMoney =%d\n",RecordStr.RecordToalNumber,RecordStr.RecordToalMoney);
+		printf_debug("RecordStr.RecordToalNumber = %d, RecordStr.RecordToalMoney = %d\n",RecordStr.RecordToalNumber,RecordStr.RecordToalMoney);
 	}
-	//sqlite3_close(recod_db);
-  return RecordStr;
+	sqlite3_close(recod_db);
+	return RecordStr;
 }
 
 //查询未采消费总额跟消费笔数
@@ -1139,7 +1186,7 @@ struct	sRecordMoneyStruct sqlite3_consume_query_collectedConsumemoney_db(void)
 	sqlite3_stmt *stmt = NULL; // 用来取数据的
 
 	/* 打开数据库 */
-	len = sqlite3_open("record.db",&recod_db);
+	len = sqlite3_open("record.db", &recod_db);
 	if( len )
 	{
 	   /*  fprintf函数格式化输出错误信息到指定的stderr文件流中  */

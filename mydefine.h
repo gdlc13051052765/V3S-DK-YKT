@@ -26,13 +26,13 @@ struct	sDatasStruct//通讯数据格式
 };
 union	sDatasUnion
 {
-	unsigned char	S_DatasBuffer[150];
-	struct	sDatasStruct	S_DatasStruct;
+	unsigned char S_DatasBuffer[150];
+	struct	sDatasStruct S_DatasStruct;
 };
 
 
-#define		MAXCARDPRINTERNUM	262144 //最大卡号
-#define MAXRECORD_NUM  655340//最大交易记录
+#define	MAXCARDPRINTERNUM	262144 //最大卡号
+#define MAXRECORD_NUM  		655340//最大交易记录
 
 ////错误信息定义
 #define		SYS_OK					0
@@ -63,17 +63,17 @@ union	sDatasUnion
 #define     CPU_SELFILE_FAIL        20//选文件失败(1.主目录2.一卡通应用3.钱包文件)
 #define     CPU_READFILE_FAIL       21//读文件失败(1.公共信息2.累计文件3.记录)
 #define     CPU_REDABALANCE_FAIL    22//读余额失败
-#define			Uncert_State						23//写卡、交易失败
+#define		Uncert_State						23//写卡、交易失败
 #define     CARD_SAME_ERROR	        24//非同一张卡错误(1.序列号2.卡印刷号)
-#define 		GET_PROVE_FAIL		    	25//取交易认证失败
+#define 	GET_PROVE_FAIL		    	25//取交易认证失败
 #define     PSAM_MAC1_FAIL		    	26//MAC1
 #define     PSAM_CHECK_MAC2		    	27//MAC2
 #define	    PSAM_RESET_ERROR          28//匹配字错
 #define	    PSAM_FILEPARA_ERR       29//PSAM错误(1.一卡通目录2.参数读取3.站点为0)
-#define			NO_PURSE_ERROR					30 //钱包没设置
-#define			SYS_CONSUM_ESC					31 //钱包没设置
-#define			No_Use					        32 //不允许此身份消费
-#define			No_ip					        	33 //IP丢失
+#define		NO_PURSE_ERROR					30 //钱包没设置
+#define		SYS_CONSUM_ESC					31 //钱包没设置
+#define		No_Use					        32 //不允许此身份消费
+#define		No_ip					        	33 //IP丢失
 
 #define     Consume_Ok             16
 #define     Consume_Err            17
@@ -85,13 +85,13 @@ union	sDatasUnion
 #define     PSAM_COM_ERROR          0xf1//PSAM通讯错误(1.长度2.无响应3.响应错误) 
 #define     CPU_WRITEPURSE_FAIL     0xf2//写累计失败
 #define     CONSUM_PROCE_FAIL	    	0xf3//交易失败
-#define			CARD_NOCARD							0xff
+#define		CARD_NOCARD							0xff
 
 
 /////////////通讯命令定义//////////////////////
 #define		RD_ADDR_COMD	   	    0x30//读站点
 
-#define   DOWNLODER_COMD        0x19  //下载
+#define     DOWNLODER_COMD        0x19  //下载
 
 #define		POS_RST_COMD			0x10//POS复位
 #define		SET_BATCH_COMD		0xb1//设置批次是否有效
@@ -153,13 +153,6 @@ union	sDatasUnion
 #define		Running_Status		6//正在执行
 #define		Running_Error		7//无法执行
 
-
-#define		CONSUM_SIMPLE		0 //简易
-#define		CONSUM_NUM			1 //菜号
-#define		CONSUM_RATION		2 //定额
-#define		CONSUM_MONEY		3 //金额
-#define		CONSUM_MENU			4 //菜单设置方式
-#define     CONSUM_PLAN         5//价格方案
 
 #define		DEFAULT_CONSUM_MODE	CONSUM_MONEY //默认的消费方式
 

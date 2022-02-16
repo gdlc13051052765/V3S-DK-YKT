@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 //时间结构体
-struct	sTimeStruct
+struct sTimeStruct
 {
 	unsigned char	YearChar;
 	unsigned char	MonthChar;
@@ -14,9 +14,9 @@ struct	sTimeStruct
 	unsigned char	MinuteChar;
 	unsigned char	SecondChar;
 };
-union	uTimeUnion
+union uTimeUnion
 {
-	unsigned char	TimeString[6];
+	unsigned char TimeString[6];
 	struct	sTimeStruct	S_Time;
 };
 
@@ -31,12 +31,4 @@ void lib_systime_creat_timer(int ms,hal_timer_timeout_handler callBackFun); //�
 //启动定时器
 void lib_systime_start_timer(void);
 
-uint8_t		DiagTimeString(uint8_t bbit,uint8_t * ptr);
-
-
-
-
-
-
-
-
+uint8_t	DiagTimeString(uint8_t bbit,uint8_t * ptr);

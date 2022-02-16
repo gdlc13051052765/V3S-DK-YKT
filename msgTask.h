@@ -14,13 +14,8 @@
 #define RECQTKEYID       66
 
 //QT---->>>golang 命令
-#define WRPLATE_DATA_CMD          0x01//写盘信息命令
-#define WRPLATE_STOP_CMD          0x02//停止写盘命令
-#define WRPLATE_INIT_BIND_CMD     0x03//配网指令
-#define WRPLATE_SITE_BIND_CMD     0x04//现场绑定食堂命令
-#define WRPLATE_UNBIND_CMD        0x05//解绑命令
-#define WRPLATE_OTA_REBOOT_CMD    0x06//ota golang重启
-#define WRPLATE_REBOOT_CMD        0x07//golang重启
+#define QT_CURRENTMONEY_CMD          0x01//QT下发当前消费额
+#define QT_CANCEL_CONSUME_CMD        0x02//QT发送取消消费
 
 //golang---->>>QT 命令
 #define WRPLATE_STAS_CMD         0xA1//写盘状态命令
@@ -172,3 +167,14 @@ void aws_send_change_status_to_qt(int status);
 * 创建时间： 2021-04-25 
 ==========================================================================================*/
 int set_stop_write_palte_status(void);
+
+/*=======================================================================================
+* 函 数 名： send_data_to_qt_display
+* 参    数： 
+* 功能描述:  发送数据到QT直接显示
+* 返 回 值： 成功返回0
+* 备    注： 
+* 作    者： lc
+* 创建时间： 2021-12-02 
+==========================================================================================*/
+int send_data_to_qt_display(char *data);

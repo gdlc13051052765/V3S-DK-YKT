@@ -1,10 +1,18 @@
 package main
 
+/*
+#include <stdio.h>
+#include "udp_data_analyse.h"
+#cgo CFLAGS: -I./
+#cgo LDFLAGS: -L./ -lsqlite3  -lm
+*/
+import "C"
 import (
 	"encoding/hex"
 	"fmt"
 	"net"
 	"time"
+	"unsafe"
 )
 
 //udp socket 句柄
@@ -29,38 +37,49 @@ func init_udp_client(ipaddr string) {
 }
 
 /*==================================================================================
-* 函 数 名： udp_client_test
+* 函 数 名： udp_client_task
 * 参    数：
-* 功能描述:  udp 客户端发送测试函数
+* 功能描述:  udp 客户端任务
 * 返 回 值： None
 * 备    注：
 * 作    者： lc
 * 创建时间： 2021-05-25
 ==================================================================================*/
-func udp_client_test(ipaddr string) {
+var udpSendData []byte
+var sendFlag bool = false
+
+func udp_client_task(localipaddr string, remoteipaddr string, port int) {
 	var err error
-	pUdpSocket, err = net.Dial("udp", ipaddr)
+	// pUdpSocket, err = net.Dial("udp", "192.168.3.37:9000")
+	// if err != nil {
+	// 	fmt.Println("连接失败!", err)
+	// 	return
+	// }
+
+	localip := net.ParseIP(localipaddr)
+	remoteip := net.ParseIP(remoteipaddr)
+	lAddr := &net.UDPAddr{IP: localip, Port: port}
+	rAddr := &net.UDPAddr{IP: remoteip, Port: port}
+	pUdpSocket, err = net.DialUDP("udp", lAddr, rAddr)
 	if err != nil {
-		fmt.Println("连接失败!", err)
-		return
+		fmt.Println(err)
 	}
+
 	//defer pUdpSocket.Close()
 	//这里是设备正常请求
 	//假设该设备序号
-	SerialNumbe := "AA001D80"
-	go func() {
-		for {
-			//报文长度占用俩个字节(报文长度不包含自身)，类型1个字节，设备序列号4个字节
-			decodeString, err := hex.DecodeString("050000" + SerialNumbe)
-			if err != nil {
-				fmt.Println("错误的16进制字符串！")
-			}
-			fmt.Printf("发送的心跳包:{%s}\n", ByteToHex(decodeString))
-			pUdpSocket.Write(decodeString)
-			//心跳发送后，睡眠5秒
-			time.Sleep(time.Duration(10) * time.Second)
-		}
-	}()
+	// SerialNumbe := "AA001D80"
+	// go func() {
+	// 	for {
+	// 		udpSendData, err := hex.DecodeString(SerialNumbe)
+	// 		if err != nil {
+	// 			fmt.Println("错误的16进制字符串！")
+	// 		}
+	// 		pUdpSocket.Write(udpSendData)
+	// 		//心跳发送后，睡眠5秒
+	// 		time.Sleep(time.Duration(1000) * time.Millisecond)
+	// 	}
+	// }()
 	buf := make([]byte, 1024)
 	for {
 		_, err := pUdpSocket.Read(buf)
@@ -68,9 +87,30 @@ func udp_client_test(ipaddr string) {
 			fmt.Println("conn.Read err:", err)
 			return
 		}
-		fmt.Printf("收到服务器心跳包返回:{%s}\n", ByteToHex(buf[:len(buf)]))
-		fmt.Print("请输入请求报文:\n")
+		//fmt.Printf("收到服务器数据:{%s}\n", ByteToHex(buf[:len(buf)]))
+		C.ReceiveSub((*C.char)(unsafe.Pointer(&buf[0]))) //byte转C语言的char*,C代码调用，命令处理
+		time.Sleep(10 * time.Millisecond)
 	}
+}
+
+/*==================================================================================
+* 函 数 名： udp_send_data
+* 参    数：
+* 功能描述:  udp 客户端发送数据
+* 返 回 值： None
+* 备    注：
+* 作    者： lc
+* 创建时间： 2021-05-25
+==================================================================================*/
+//export udp_send_data
+func udp_send_data(data *C.char) {
+	str := C.GoString(data)
+	udpSendData, err := hex.DecodeString(str)
+	if err != nil {
+		fmt.Println("错误的16进制字符串！")
+	}
+	fmt.Printf("udp发送数据:{%s}\n", ByteToHex(udpSendData))
+	pUdpSocket.Write(udpSendData)
 }
 
 /*==================================================================================

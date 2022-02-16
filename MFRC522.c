@@ -490,7 +490,6 @@ unsigned char check_RFCPU_ResetInfo(unsigned char RcvLen, void * Rcvdata ,uint8_
 	unsigned char i;
 	unsigned char status;
 	
-
 	MFRC522_Initializtion();
 	//DeSelect();
 	//debug("check_RFCPU_ResetInfo\r\n");
@@ -609,9 +608,7 @@ unsigned char check_RFM1_ResetInfo(uint8_t RcvLen, void * Rcvdata,uint8_t *CardS
 		memcpy(CardSerialNumBuf,CardSerialNum,4);
 		return	CARD_OK;
 	}
-
 }
-
 
 /******************寻卡操作区分M1还是CPU卡*******************************/
 uint8_t Request_Card_info(uint8_t Cardtype ,uint8_t RcvLen, void * Rcvdata,uint8_t *CardSerialNumBuf)
@@ -643,8 +640,7 @@ uint8_t Request_Card_info(uint8_t Cardtype ,uint8_t RcvLen, void * Rcvdata,uint8
 		else
 		{
 			//printf_debug("poll card fail\n");
-			return 0xff;
-			
+			return 0xff;		
 		}
 	}	
 }
@@ -811,7 +807,6 @@ char ISO7816_TRANSCEIVE(unsigned char SendLen, unsigned char * SendBuf, unsigned
 				#endif
 				return 0xff;
 			}	
-			//===================================================================
 		}
 		else
 		{
@@ -819,12 +814,8 @@ char ISO7816_TRANSCEIVE(unsigned char SendLen, unsigned char * SendBuf, unsigned
 				printf("status6=:%02X \n",status);
 			#endif
 			return status;
-		}
-			
+		}	
 	}while(1);
-
-	
-
 	return status;
 }
 

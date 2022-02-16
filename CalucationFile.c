@@ -5,11 +5,11 @@
 #include <stdio.h>
 #include <string.h>
 
- uint32_t	ChgKeyStringToUlong(uint8_t * ptr ,uint8_t Len)//BCD码字符串转换为整型数
+ uint32_t ChgKeyStringToUlong(uint8_t * ptr, uint8_t Len)//BCD码字符串转换为整型数
 {
-	 uint32_t		ii=0;
-	uint32_t		jj=1;
-	uint8_t		aa;
+	uint32_t ii=0;
+	uint32_t jj=1;
+	uint8_t	aa;
 	do
 	{
 		aa=(*(ptr+Len-1));
@@ -19,12 +19,13 @@
 	return	ii;
 }
 
-uint32_t	ChgStringsToInt(uint8_t * ptr)
+uint32_t ChgStringsToInt(uint8_t * ptr)
 {
 	uint8_t	i;
-	uint16_t	kk=1;
-	uint32_t	ii=0;
+	uint16_t kk=1;
+	uint32_t ii=0;
 	uint8_t	st_data;
+
 	for (i=0;i<5;i++)
 	{
 		st_data= ptr[4-i];
@@ -34,10 +35,10 @@ uint32_t	ChgStringsToInt(uint8_t * ptr)
 	return	ii;
 }
 
-uint8_t BytesComp( uint8_t * CharDptr1,uint8_t * CharDptr2,uint8_t CompNum)
+uint8_t BytesComp(uint8_t * CharDptr1, uint8_t * CharDptr2, uint8_t CompNum)
 {
-	uint8_t 			aa;
-	uint8_t			bb;
+	uint8_t aa;
+	uint8_t	bb;
 	do
 	{
 		aa=* CharDptr1++;
@@ -46,10 +47,12 @@ uint8_t BytesComp( uint8_t * CharDptr1,uint8_t * CharDptr2,uint8_t CompNum)
 	}while (--CompNum);
 	return 0;
 }
-uint8_t	BytesCheckSum(uint8_t *ptr,uint8_t Len)
+
+uint8_t	BytesCheckSum(uint8_t *ptr, uint8_t Len)
 {
 	uint8_t	aa=0;
 	uint8_t bb;
+
 	Len--;
 	do
 	{	
@@ -62,9 +65,10 @@ uint8_t	BytesCheckSum(uint8_t *ptr,uint8_t Len)
 	else
 		return 0;
 }
-uint8_t	CalCheckSum(uint8_t  * Ptr,uint8_t charLen)
+uint8_t	CalCheckSum(uint8_t  * Ptr, uint8_t charLen)
 {
-	uint8_t 	st_data=0;
+	uint8_t st_data=0;
+
 	do
 	{
 		st_data+= * Ptr++;
@@ -72,9 +76,10 @@ uint8_t	CalCheckSum(uint8_t  * Ptr,uint8_t charLen)
 	st_data=~st_data;
 	return st_data;
 }
-uint8_t	BCD_String_Diag(uint8_t * ptr ,uint8_t Len)//BCD码字符串诊断
+uint8_t	BCD_String_Diag(uint8_t * ptr, uint8_t Len)//BCD码字符串诊断
 {
-	uint8_t			aa,bb;
+	uint8_t	aa,bb;
+
 	if (!Len)
 		return	0;
 	do
@@ -89,11 +94,12 @@ uint8_t	BCD_String_Diag(uint8_t * ptr ,uint8_t Len)//BCD码字符串诊断
 	}while (--Len);
 	return	0;
 }
-uint32_t	ChgBCDStringToUlong(uint8_t * ptr ,uint8_t Len)//BCD码字符串转换为整型数
+
+uint32_t ChgBCDStringToUlong(uint8_t * ptr ,uint8_t Len)//BCD码字符串转换为整型数
 {
-	uint32_t		ii=0;
-	uint32_t		jj=1;
-	uint8_t		aa;
+	uint32_t ii=0;
+	uint32_t jj=1;
+	uint8_t	aa;
 	do
 	{
 		aa=BCDToHex(* (ptr+Len-1));
@@ -102,11 +108,13 @@ uint32_t	ChgBCDStringToUlong(uint8_t * ptr ,uint8_t Len)//BCD码字符串转换�
 	}while (--Len);
 	return	ii;
 }
-void	ChgUlongToBCDString(uint32_t iii,uint8_t * ptr,uint8_t Len)
+
+void ChgUlongToBCDString(uint32_t iii,uint8_t * ptr,uint8_t Len)
 {
-	uint8_t 		i;
-	uint8_t 		aa;
-	uint32_t		jj=1;
+	uint8_t i;
+	uint8_t aa;
+	uint32_t jj=1;
+
 	for (i=0;i<Len-1;i++)
 		jj=jj*100;
  	for (i=0;i<Len;i++)
@@ -118,21 +126,23 @@ void	ChgUlongToBCDString(uint32_t iii,uint8_t * ptr,uint8_t Len)
  	}	
 }
 
-uint8_t HexToBCD(uint8_t aa )
+uint8_t HexToBCD(uint8_t aa)
 {
 	return((aa/10)*16+aa%10);
 }
-uint8_t BCDToHex(uint8_t aa )
+
+uint8_t BCDToHex(uint8_t aa)
 {
 	return((aa/16)*10+aa%16);
 }
 
 
-void	ChgIntToStrings(uint16_t	ii,uint8_t * ptr)
+void ChgIntToStrings(uint16_t	ii,uint8_t * ptr)
 {
-	uint16_t	kk=10000;
+	uint16_t kk=10000;
 	uint8_t	st_data;
 	uint8_t	i;
+
 	for (i=0;i<5;i++)
 	{
 		st_data=ii/kk;
@@ -143,15 +153,14 @@ void	ChgIntToStrings(uint16_t	ii,uint8_t * ptr)
 	}	
 }
 
-
-uint32_t	ChgInputToUlong(uint8_t * ptr,uint8_t Num)//输入的数字转换为长整形
+uint32_t ChgInputToUlong(uint8_t * ptr,uint8_t Num)//输入的数字转换为长整形
 {
 	uint8_t	i,st_data,j;
-	uint32_t	iii=0;
-	uint32_t	jjj=100;
+	uint32_t iii=0;
+	uint32_t jjj=100;
 	uint8_t	SumNum=0;
-//	uint8_t	PointX=0xff;
-	uint8_t		bbit=0;
+	uint8_t	bbit=0;
+
 	for (i=0;i<Num;i++)
 	{
 		st_data=ptr[i];
@@ -182,12 +191,14 @@ uint32_t	ChgInputToUlong(uint8_t * ptr,uint8_t Num)//输入的数字转换为长
 	}
 	return	iii;
 }
-void	FormatBuffer(uint8_t	SLen,uint8_t * ptr ,uint8_t * Len)
+
+void FormatBuffer(uint8_t SLen,uint8_t * ptr ,uint8_t * Len)
 {
 	uint8_t i;
 	uint8_t	j=0;
 	uint8_t	aaa[10];
-	uint8_t		bbit=0;
+	uint8_t	bbit=0;
+
 	memset(aaa,0xff,SLen);
 	for (i=0;i<SLen;i++)
 	{
@@ -202,7 +213,7 @@ void	FormatBuffer(uint8_t	SLen,uint8_t * ptr ,uint8_t * Len)
 }
 
 //取四字节数据(高位在前)
-uint32_tGetU32_HiLo(uint8_t * lbuf)
+uint32_t GetU32_HiLo(uint8_t * lbuf)
 {
 	uint8_t * p_buf;
 	uint32_t r_buf;
@@ -255,6 +266,7 @@ int32_t FourBigToSmall(uint32_t a)
 {
 	uint32_t c;
 	unsigned char b[4];
+
 	b[0] =(unsigned char) (a);
 	b[1] = (unsigned char)(a>>8);
 	b[2] = (unsigned char)(a>>16);
@@ -280,28 +292,27 @@ void HexGroupToHexString(uint8_t *data,uint8_t *dst,uint8_t len)
 }
 //16进制字符串转16进制数组
 uint16_t HexStringToHexGroup(uint8_t *psrc,uint8_t *buf,uint16_t len)
-	{
+{
     int i,n = 0;
-
-		uint8_t dst[300];
-		
-		for(i=0;i<len;i++)
-		{
-			strcpy(dst,"0X");
-			strncat(dst,psrc,2);
-			buf[i]= strtol(dst,NULL,16);
-			psrc+=2;
-			//printf("%#X ",buf[i]);
-		}
-		
+	uint8_t dst[300];
+	
+	for(i=0;i<len;i++)
+	{
+		strcpy(dst,"0X");
+		strncat(dst,psrc,2);
+		buf[i]= strtol(dst,NULL,16);
+		psrc+=2;
+		//printf("%#X ",buf[i]);
+	}	
     return n;
 }
 //累计额和取反	
 unsigned char AddQuFan(uint8_t *str,uint8_t len)
 {
 	int i;
-	uint8_t sum  ;
-  for(i=0;i<len;i++)
+	uint8_t sum ;
+
+  	for(i=0;i<len;i++)
 	{
 		 sum += str[i];
 	}
@@ -311,9 +322,9 @@ unsigned char AddQuFan(uint8_t *str,uint8_t len)
 
 uint32_t ChgBCDStringTouint32_t(uint8_t * ptr ,uint8_t Len)//BCD码字符串转换为整型数
 {
-	uint32_t		ii=0;
-	uint32_t		jj=1;
-	uint8_t		aa;
+	uint32_t ii=0;
+	uint32_t jj=1;
+	uint8_t	 aa;
 	do
 	{
 		aa=BCDToHex(* (ptr+Len-1));
@@ -324,9 +335,9 @@ uint32_t ChgBCDStringTouint32_t(uint8_t * ptr ,uint8_t Len)//BCD码字符串转�
 }
 void Chguint32_tToBCDString( uint32_t iii,uint8_t * ptr,uint8_t Len)
 {
-	uint8_t 		i;
-	uint8_t 		aa;
-	uint32_t 		jj=1;
+	uint8_t i;
+	uint8_t aa;
+	uint32_t jj=1;
 	for (i=0;i<Len-1;i++)
 		jj=jj*100;
  	for (i=0;i<Len;i++)
@@ -336,4 +347,28 @@ void Chguint32_tToBCDString( uint32_t iii,uint8_t * ptr,uint8_t Len)
 		iii=iii%jj;
 		jj=jj/100;
  	}	
+}
+
+void ChgTimeToRecordDatas(uint8_t * Timeptr,uint8_t * ptr)
+{
+	uint8_t	aa,bb;
+	aa=BCDToHex(Timeptr[0]);//年
+	aa<<=2;
+	bb=BCDToHex(Timeptr[1]);//月
+	bb&=0x0f;
+	ptr[0]=aa+(bb>>2);
+	aa=BCDToHex(Timeptr[2]);//日
+	ptr[1]=bb<<6;
+	aa<<=1;
+	ptr[1]+=aa;
+	aa=BCDToHex(Timeptr[3]);//时
+	if (aa>=16)
+		ptr[1]++;
+	aa&=0x0f;
+	ptr[2]=aa<<4;
+	aa=BCDToHex(Timeptr[4]);//分
+	ptr[2]+=(aa>>2);
+	bb=BCDToHex(Timeptr[5]);//秒
+	ptr[3]=aa<<6;
+	ptr[3]+=bb;		
 }

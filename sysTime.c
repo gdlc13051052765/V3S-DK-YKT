@@ -68,8 +68,6 @@ uint8_t	DiagTimeString(uint8_t bbit,uint8_t * ptr)
 	return  0;
 }
 
-
-
 //获取系统时间
 union uTimeUnion  lib_systime_get_systime(void)
 {
@@ -99,7 +97,6 @@ union uTimeUnion  lib_systime_get_systime(void)
 	timestruct.S_Time.SecondChar = HexToBCD(timestruct.S_Time.SecondChar);
 
 	return timestruct;
-
 }
 
 //设置系统时间
@@ -118,9 +115,7 @@ void lib_systime_set_systime(int year,int month,int day,int hour,int min,int sec
     tv.tv_sec = mktime(&tptr);
     tv.tv_usec = 0;
     settimeofday(&tv, NULL);
-
 }
-
 
 //设置定时器
 void lib_systime_creat_timer(int ms,hal_timer_timeout_handler callBackFun) //新建一个计时器
@@ -139,35 +134,34 @@ void lib_systime_creat_timer(int ms,hal_timer_timeout_handler callBackFun) //新
 	cb[timerNum++] = callBackFun;
 }
 
-
 static void timeout(int sig_num) //判断定时器是否超时，以及超时时所要执行的动作
 {		
-	  int j;	
-	  for(j=0;j<timerNum;j++)	
-	  {	
-		 if(myTimer[j].left_time!=0)
-			myTimer[j].left_time--;
-		 else	
-		 {	
-			 switch(myTimer[j].func)	
-			 {		//通过匹配myTimer[j].func，判断下一步选择哪种操作	
-				case 0:	
-				//printf("------Timer 1: --Hello Aillo!\n");
-				cb[0]();
-				break;	
-				case 1:
-				cb[1]();
-				//printf("------Timer 2: --Hello Jackie!\n");
-				break;
+	int j;	
+	for(j=0;j<timerNum;j++)	
+	{	
+		if(myTimer[j].left_time!=0)
+		myTimer[j].left_time--;
+		else	
+		{	
+			switch(myTimer[j].func)	
+			{		//通过匹配myTimer[j].func，判断下一步选择哪种操作	
+			case 0:	
+			//printf("------Timer 1: --Hello Aillo!\n");
+			cb[0]();
+			break;	
+			case 1:
+			cb[1]();
+			//printf("------Timer 2: --Hello Jackie!\n");
+			break;
 
-				case 2:
-				cb[2]();
-				//printf("------Timer 3: --Hello PiPi!\n");
-				break;	
-			 }	
-			 myTimer[j].left_time=myTimer[j].total_time; //循环计时	
-		 }	
-	  }	
+			case 2:
+			cb[2]();
+			//printf("------Timer 3: --Hello PiPi!\n");
+			break;	
+			}	
+			myTimer[j].left_time=myTimer[j].total_time; //循环计时	
+		}	
+	}	
 }
 
 //启动定时器

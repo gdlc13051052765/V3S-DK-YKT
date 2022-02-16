@@ -69,7 +69,7 @@ static int msg_queue_num(p_send_queue_t p_queue_buff)
   return p_queue_buff->count;
 }
 
-volatile unsigned char queue_mutex=0;
+static unsigned char queue_mutex=0;
 //填充队列信息
 static void msg_queue_push(p_send_queue_t p_queue_buff, fifomesg_t *data)
 {
@@ -335,6 +335,19 @@ int send_data_to_qt_direct(qtdata_t data_t)
 }
 
 /*=======================================================================================
+* 函 数 名： send_data_to_qt_display
+* 参    数： 
+* 功能描述:  发送数据到QT直接显示
+* 返 回 值： 成功返回0
+* 备    注： 
+* 作    者： lc
+* 创建时间： 2021-12-02 
+==========================================================================================*/
+int send_data_to_qt_display(char *data)
+{
+  send_msg_data(qt_snd_msg_id,data, sizeof(data));
+}
+/*=======================================================================================
 * 函 数 名： get_stop_write_palte_status
 * 参    数： 
 * 功能描述:  返回是否停止写盘状态
@@ -375,9 +388,6 @@ int receive_qt_msg_data_task(void)
 {
   mymesg_t ckxmsg; 
   int rec_len = 0,i=0;
-  int food_id = 0;
-  char context[100] = "西红柿鸡蛋";
-  qtdata_t mSndMsg;
 
   rec_len = msgrcv(qt_rec_msg_id, (void *)&ckxmsg, 512, RECQTKEYID, 0);
   if(rec_len < 0) {
@@ -388,12 +398,11 @@ int receive_qt_msg_data_task(void)
     printf_debug("rece time = ");
     print_current_time();
     printf_debug("rec data = ");
-    for(i=0;i<ckxmsg.mtext[0]+1;i++)
-      printf_debug("%02x ", ckxmsg.mtext[i]);
+    for(i=0;i<6;i++)
+      printf_debug("%2x ", ckxmsg.mtext[i]);
     printf_debug("\n");
 
-    MSGTASKDELAY = 10000;//队列任务延时设置成10ms
-    
+    MSGTASKDELAY = 10000;//队列任务延时设置成10ms 
   }
 }
 

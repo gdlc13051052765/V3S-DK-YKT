@@ -3,6 +3,7 @@
 #include "sysTime.h"
 #include "debug_print.h"
 #include "mydefine.h"
+#include "sqliteTask.h"
 
 uchar	CardAuthKeySub(uchar,uchar); 
 uchar	ReadCardCommonDatas_M1 (void);//读出公共区的数据
@@ -12,9 +13,44 @@ uchar	WriteBalanceToCard_M1(uchar,uchar);//写卡
 void	CalPurseKeyCode(uchar *,uchar *,uchar *,uchar *);//计算钱包的写卡密码
 uchar	ReWriteCardSub_M1(uchar);
 
+
+static  C_DevMsgSt rwDevMsgSt;//设备信息
+/*==================================================================================
+* 函 数 名： read_card_data_form_config_db
+* 参    数： 
+* 功能描述:  从配置数据库读取卡配置信息
+* 返 回 值： None
+* 备    注： 创建成功返回0
+* 作    者： lc
+* 创建时间： 2021-09-27
+==================================================================================*/
+static uint8_t cardKeyCode[6];
+static uint8_t matchCode[4];
+static uint8_t calCardKey[8];
+static uint8_t CardBatchEnable[32];
+uint8_t PurseEnable[10];
+int read_card_data_form_config_db(void)
+{
+	rwDevMsgSt = sqlite_read_devMsg_from_config_db();
+	
+	printf_debug("卡密码 = %s\n",rwDevMsgSt.cardKeyCode);
+	HexStringToHexGroup(rwDevMsgSt.cardKeyCode, cardKeyCode, 6);
+	printf_debug("卡匹配字 = %s\n",rwDevMsgSt.matchCode);
+	HexStringToHexGroup(rwDevMsgSt.matchCode, matchCode, 4);
+	printf_debug("卡密码 = %s\n",rwDevMsgSt.calCardKey);
+	HexStringToHexGroup(rwDevMsgSt.calCardKey, calCardKey, 8);
+	printf_debug("公共扇区 = %d\n",rwDevMsgSt.cardSector);
+	printf_debug("限额 = %d\n",rwDevMsgSt.dayLimetMoney);  
+	printf_debug("卡折扣 = %d\n",rwDevMsgSt.cardRebate);
+	printf_debug("卡批次 = %s\n",rwDevMsgSt.cardBatchEnable);
+	HexStringToHexGroup(rwDevMsgSt.cardBatchEnable,CardBatchEnable, 32);
+	printf_debug("钱包号 = %s\n",rwDevMsgSt.purseEnable);
+	HexStringToHexGroup(rwDevMsgSt.purseEnable,PurseEnable, 10);
+}
+
 //卡认证
-uchar	CardAuthKeySub(uchar bbit, uchar	BlockNum)
-{//bbit=0-KeyA,bbit=1--KeyB
+uchar CardAuthKeySub(uchar bbit, uchar BlockNum)
+{	//bbit=0-KeyA,bbit=1--KeyB
 	uchar	status;
 	uchar	st_data;
 	uchar 	CardKey[6]={0xA0,0xA1,0xA2,0xA3,0xA4,0xA5};
@@ -22,18 +58,18 @@ uchar	CardAuthKeySub(uchar bbit, uchar	BlockNum)
 	uchar	i;
 	//printf_debug("CardKeyCode==%2X %2X %2X %2X %2X %2X ",CardKeyCode[0],CardKeyCode[1],CardKeyCode[2],CardKeyCode[3],CardKeyCode[4],CardKeyCode[5]);
 	if (!bbit)//公共区用认证固定密码
-		memcpy(CardKey,CardKeyCode,6);
+		memcpy(CardKey, cardKeyCode, 6);
 	else//钱包写卡密码的计算
-		CalPurseKeyCode(CardSerialNum,MatchCode,CalCardKey,CardKey);			
-		//status=Mf500HostCodeKey(CardKey,CardKeyBuffer);
+		CalPurseKeyCode(CardSerialNum, matchCode, calCardKey, CardKey);			
+		
 	if (bbit)
 		st_data=0x61;//KEYB
 	else
 		st_data=0x60;//KEYA	
 	for (i=0;i<5;i++)
 	{
-	//printf_debug("CardSerialNum==%2X %2X %2X %2X \r\n",CardSerialNum[0],CardSerialNum[1],CardSerialNum[2],CardSerialNum[3]);
-		status=MFRC522_Auth(st_data,BlockNum,CardKey,CardSerialNum);
+		//printf_debug("CardSerialNum==%2X %2X %2X %2X \r\n",CardSerialNum[0],CardSerialNum[1],CardSerialNum[2],CardSerialNum[3]);
+		status=MFRC522_Auth(st_data, BlockNum, CardKey, CardSerialNum);
 		if (!status)
 			break;
 	}
@@ -44,77 +80,81 @@ uchar	CardAuthKeySub(uchar bbit, uchar	BlockNum)
 }
 
 //读出卡号及卡种类
-uchar	ReadCardCommonDatas_M1 (void)
+uchar ReadCardCommonDatas_M1(void)
 {
 	uchar	status,i=0;
 	ulong	iii =0;
 	uchar	RdCardDatasBuffer[80];
 
-	status=CardAuthKeySub(0,CardSector*4);
+	status=CardAuthKeySub(0, rwDevMsgSt.cardSector*4);
 	if (status)
-		{printf_debug("CardAuth fail\n");
+	{
+		printf_debug("CardAuth fail\n");
 		return	CARD_NOCARD;
-		}
+	}
 	for (i=0;i<5;i++)
 	{
-		status=MFRC522_Read(CardSector*4,RdCardDatasBuffer);				
+		status=MFRC522_Read(rwDevMsgSt.cardSector*4, RdCardDatasBuffer);				
 		if (!status)
 		{	
-			status=	BytesCheckSum(RdCardDatasBuffer,16);
+			status=	BytesCheckSum(RdCardDatasBuffer, 16);
 			if (!status)
 				break;
 		}
 	}
-		printf_debug("RdCardDatasBuffer==");
-		for(i=0;i<16;i++)
-			printf_debug("%2X ",RdCardDatasBuffer[i]);
-		printf_debug("\r\n");
+	printf_debug("RdCardDatasBuffer==");
+	for(i=0;i<16;i++)
+		printf_debug("%2X ", RdCardDatasBuffer[i]);
+	printf_debug("\r\n");
 	if (status)
 		return	CARD_NOCARD;
-	if (memcmp(RdCardDatasBuffer,MatchCode,4))
-		{
+	if (memcmp(RdCardDatasBuffer, matchCode, 4))
+	{
 		printf_debug("MatchCode err\r\n");
 		return	MATCHCODE_ERR;//系统用户代码错
-		}
+	}
 	if (RdCardDatasBuffer[12])
 		return	CARD_STATUS_ERROR;//卡状态错误
 	CardBatch= RdCardDatasBuffer[4] ;//卡批次
 	i=CardBatch/8;
 	status=1<<(CardBatch%8);
 	if (!(status&CardBatchEnable[i]))
-		{printf_debug("CardBatch err\r\n");
+	{
+		printf_debug("CardBatch err\r\n");
 		return	CARD_BATCH_ERROR;
-		}
- 	if (DiagTimeString(0,RdCardDatasBuffer+9))
- 		{printf_debug("DiagTimeString err\r\n");
+	}
+ 	if (DiagTimeString(0, RdCardDatasBuffer+9))
+	{
+		printf_debug("DiagTimeString err\r\n");
 		return	CARD_OVERDATE;//卡有效期格式不合法	
- 		}
-	status=memcmp(RdCardDatasBuffer+9,SysTimeDatas.TimeString,3);
+	}
+	status=memcmp(RdCardDatasBuffer+9, SysTimeDatas.TimeString, 3);
 	if (status==0xff)
-		{printf_debug("CARD_OVERDATE err\r\n");
+	{
+		printf_debug("CARD_OVERDATE err\r\n");
 		return	CARD_OVERDATE;//超过有效期
-		}
-	CardIdentity=BCDToHex( RdCardDatasBuffer[13] );//卡身份
-	memcpy(CardPrinterNum,RdCardDatasBuffer+5,4);//卡号	
-	if (BCD_String_Diag(CardPrinterNum,4))
-	{printf_debug("CARD_NUMBER_ERROR err\r\n");
+	}
+	CardIdentity=BCDToHex(RdCardDatasBuffer[13]);//卡身份
+	memcpy(CardPrinterNum, RdCardDatasBuffer+5, 4);//卡号	
+	if (BCD_String_Diag(CardPrinterNum, 4))
+	{
+		printf_debug("CARD_NUMBER_ERROR err\r\n");
 		return	CARD_NUMBER_ERROR;//卡号不合法
 	}
-	iii=ChgBCDStringToUlong(CardPrinterNum,4);
+	iii=ChgBCDStringToUlong(CardPrinterNum, 4);
 	if(sqlite3_blaknumber_query_db(iii))
 		return	CARD_LOSTCARDNUM;//挂失卡*/
 		
-	iii=ChgBCDStringToUlong(CardPrinterNum,4);
+	iii=ChgBCDStringToUlong(CardPrinterNum, 4);
 	if (iii>MAXCARDPRINTERNUM)
 		return	CARD_NUMBER_ERROR;//卡号超过范围
 
-
 	for (i=0;i<2;i++)
 	{
-		status=MFRC522_Read(CardSector*4+1,RdCardDatasBuffer);				
+		status=MFRC522_Read(rwDevMsgSt.cardSector*4+1, RdCardDatasBuffer);				
 		if (!status)
 		{
-			status=BytesCheckSum(RdCardDatasBuffer,16);
+			status=BytesCheckSum(RdCardDatasBuffer, 16);
 			if (!status)
 				break;
 		}
@@ -123,43 +163,39 @@ uchar	ReadCardCommonDatas_M1 (void)
 		return	CARD_NOCARD;
 
 	for (i=0;i<3;i++)
-	{//个人密码
-		PinCode[i]=RdCardDatasBuffer[i]^MatchCode[i];
-		status=MatchCode[3-i]&0x0f;
+	{	//个人密码
+		PinCode[i]=RdCardDatasBuffer[i]^matchCode[i];
+		status=matchCode[3-i]&0x0f;
 		status<<=4;
-		status+=(MatchCode[3-i]>>4);
+		status+=(matchCode[3-i]>>4);
  		PinCode[i]^=status;
 	}
 
-	if(BCD_String_Diag(RdCardDatasBuffer+3,4))
+	if(BCD_String_Diag(RdCardDatasBuffer+3, 4))
 		Max_ConsumMoney=0;
 	else
-		Max_ConsumMoney=ChgBCDStringToUlong(RdCardDatasBuffer+3,4);//单笔限额
-	
+		Max_ConsumMoney=ChgBCDStringToUlong(RdCardDatasBuffer+3, 4);//单笔限额
 	
 	if(DayLimetFlag)//按照下载的走
 	{
-			Limit_DayMoney = ChgBCDStringToUlong(DayLimetMoney,3);//日限额
-	}
-	else//按照卡里面的走
-	{
-		if(BCD_String_Diag(RdCardDatasBuffer+7,4))
+		Limit_DayMoney = ChgBCDStringToUlong(rwDevMsgSt.dayLimetMoney, 3);//日限额
+	} else {//按照卡里面的走
+		if(BCD_String_Diag(RdCardDatasBuffer+7, 4))
 			Limit_DayMoney=0;
 		else
-			Limit_DayMoney=ChgBCDStringToUlong(RdCardDatasBuffer+7,4);//日限额
+			Limit_DayMoney=ChgBCDStringToUlong(RdCardDatasBuffer+7, 4);//日限额
 	}
 	Limit_MoneySign = RdCardDatasBuffer[11];//区分日月限额
-
 
 //	Card_Rebate=RdCardDatasBuffer[12]; //卡折扣 
 //	if( !Card_Rebate || Card_Rebate==0xff )	 Card_Rebate=100;
 
 	for (i=0;i<5;i++)
 	{
-		status=MFRC522_Read(CardSector*4+2,RdCardDatasBuffer);				
+		status=MFRC522_Read(rwDevMsgSt.cardSector*4+2, RdCardDatasBuffer);				
 		if (!status)
 		{
-			status=BytesCheckSum(RdCardDatasBuffer,16);
+			status=BytesCheckSum(RdCardDatasBuffer, 16);
 			if (!status)
 				break;
 		}
@@ -181,20 +217,21 @@ uchar	ReadCardCommonDatas_M1 (void)
 	}
 	else*/
 	{
-		Card_Rebate = 100;
+		rwDevMsgSt.cardRebate = 100;
 	}
 	//扩展扇区
-	status=CardAuthKeySub(0,15*4+1);
+	status=CardAuthKeySub(0, 15*4+1);
 	if (status)
-		{printf_debug("CardAuth fail\n");
+	{
+		printf_debug("CardAuth fail\n");
 		return	CARD_NOCARD;
-		}
+	}
 	for (i=0;i<5;i++)
 	{
-		status=MFRC522_Read(15*4+1,RdCardDatasBuffer);				
+		status=MFRC522_Read(15*4+1, RdCardDatasBuffer);				
 		if (!status)
 		{	
-			status=	BytesCheckSum(RdCardDatasBuffer,16);
+			status = BytesCheckSum(RdCardDatasBuffer, 16);
 			if (!status)
 				break;
 		}
@@ -202,35 +239,33 @@ uchar	ReadCardCommonDatas_M1 (void)
 	//memset(namebuf,0,20);
 	for(i=0;i<16;i++)
 	{	
-	//	printf_debug("%2X ",RdCardDatasBuffer[i]);
 		if(RdCardDatasBuffer[i]==0x46)
 		{	//printf_debug("i=%d\r\n",i);
 			memset(nameBuf,0,16);
-			//gdHexGroupToHexString(RdCardDatasBuffer,nameBuf,i);
+			//HexGroupToHexString(RdCardDatasBuffer,nameBuf,i);
 			nameBuf[0] = i;
-			memcpy(nameBuf+1,RdCardDatasBuffer,i);
-			
+			memcpy(nameBuf+1,RdCardDatasBuffer,i);	
 			break;
 		}	
 	}
-
 	return	CARD_OK;
 }
 
-uchar	ReadCard_DaySumConsumMoney_M1(void)//读出累计日消费额
+uchar ReadCard_DaySumConsumMoney_M1(void)//读出累计日消费额
 {
 	uchar	status,i;
 	uchar	RdCardDatasBuffer[80];
 	uint	ii,jj;
+
 	status=CardAuthKeySub(0,PursesSector[0]*4);	
 	if (status)
 		return	CARD_NOCARD;
 	for (i=0;i<5;i++)
-	{//读主扇区，读出累计日限额
-		status=MFRC522_Read(PursesSector[0]*4,RdCardDatasBuffer);				
+	{	//读主扇区，读出累计日限额
+		status=MFRC522_Read(PursesSector[0]*4, RdCardDatasBuffer);				
 		if (!status)
 		{
-			status=BytesCheckSum(RdCardDatasBuffer,16);
+			status=BytesCheckSum(RdCardDatasBuffer, 16);
 			if (!status)
 				break;
 		}
@@ -246,17 +281,7 @@ uchar	ReadCard_DaySumConsumMoney_M1(void)//读出累计日消费额
 		CardDayConsumMoney=ChgBCDStringToUlong(RdCardDatasBuffer,4);
 		memcpy(CardConsumDate,RdCardDatasBuffer+4,3);//上次消费的有效期
 	}
-//	if (!DiagTimeString(0,CardConsumDate))
-//	{
-//		ii=(uint)12 * BCDToHex(CardConsumDate[0])+BCDToHex(CardConsumDate[1]);//上次消费的月
-//		jj=(uint)12 * BCDToHex(SysTimeDatas.S_Time.YearChar)+BCDToHex(SysTimeDatas.S_Time.MonthChar);//当前月
-//		if (jj>ii)
-//		{
-//			jj-=ii;
-//			if (jj>CardEnableMonths)
-//				return	CARD_OVERDATE;
-//		}
-//	}
+
 	if (!BCD_String_Diag(RdCardDatasBuffer+7,4))
 	{
 		memcpy(ConsumCountDateTime,RdCardDatasBuffer+7,4);
@@ -266,19 +291,20 @@ uchar	ReadCard_DaySumConsumMoney_M1(void)//读出累计日消费额
 	{
 		memset(ConsumCountDateTime,0,4);
 		CardDayConsumCount=0;
-	}
-		
+	}	
 	return	CARD_OK;
 }
-uchar	ReadCardBalanceDatas_M1( uchar RdSector)//读出卡金额及余额比较
+
+uchar ReadCardBalanceDatas_M1(uchar RdSector)//读出卡金额及余额比较
 {
 	uchar	status;
 	ulong	Money1,Money2;
 	uint	CardConsum1,CardConsum2;
 	uchar	RdCardDatasBuffer[80];
 	uchar	Date1[4],Date2[4];
-	uchar		bitUseBlock1=0;
+	uchar	bitUseBlock1=0;
 	uchar	i;
+
 	status=CardAuthKeySub(1,RdSector*4);
 	if (status)
 		return	CARD_NOCARD;
@@ -329,7 +355,7 @@ uchar	ReadCardBalanceDatas_M1( uchar RdSector)//读出卡金额及余额比较
 	}
 	if (status)
 		return	CARD_NOCARD;//读卡错
-	if ( BCD_String_Diag(RdCardDatasBuffer+16,4))//金额格式检查
+	if (BCD_String_Diag(RdCardDatasBuffer+16,4))//金额格式检查
 		return	CARD_DATA_ERROR;
 	Money1=ChgBCDStringToUlong(RdCardDatasBuffer,4);
 	Money2=ChgBCDStringToUlong(RdCardDatasBuffer+16,4);
@@ -343,9 +369,7 @@ uchar	ReadCardBalanceDatas_M1( uchar RdSector)//读出卡金额及余额比较
 		{
 			if (CardConsum2!=65535)
 				return	CARD_DATA_ERROR;
-		}
-		else
-		{
+		} else {
 			if (CardConsum1<=CardConsum2 || CardConsum1!=(CardConsum2+1))
 				return	CARD_DATA_ERROR;				
 		}
@@ -357,9 +381,7 @@ uchar	ReadCardBalanceDatas_M1( uchar RdSector)//读出卡金额及余额比较
 		{
 			if (CardConsum1!=65535)
 				return	CARD_DATA_ERROR;
-		}
-		else
-		{
+		} else {
 			if (CardConsum2<=CardConsum1 || CardConsum2!=(CardConsum1+1))
 				return	CARD_DATA_ERROR;				
 		}
@@ -368,7 +390,7 @@ uchar	ReadCardBalanceDatas_M1( uchar RdSector)//读出卡金额及余额比较
 	else
 	{
 		if (CardConsum1!=CardConsum2)
-				return	CARD_DATA_ERROR;
+			return	CARD_DATA_ERROR;
 		/////////两块金额相同，比较消费日期///////////
 		Date1[0]=RdCardDatasBuffer[4]&0x0f;
 		Date1[1]=RdCardDatasBuffer[5]>>3;
@@ -395,9 +417,7 @@ uchar	ReadCardBalanceDatas_M1( uchar RdSector)//读出卡金额及余额比较
 	{//第一块
 		bitUseMoneyBlock=1;
 		status=0;
-	}
-	else
-	{
+	} else {
 		bitUseMoneyBlock=0;
 		status=16;
 	}
@@ -441,15 +461,16 @@ uchar	ReadCardBalanceDatas_M1( uchar RdSector)//读出卡金额及余额比较
 	else
 		return	CARD_OK;
 }
-uchar	WriteBalanceToCard_M1(uchar bbit,uchar WrSector)//写卡
-{//bit == 0 消费状态;bit == 1取消消费回写原来金额
+
+uchar WriteBalanceToCard_M1(uchar bbit, uchar WrSector)//写卡
+{	//bit == 0 消费状态;bit == 1取消消费回写原来金额
 	uchar	status;
 	ulong	iii;
 	uchar	Buffer[80];
 	uchar	BufferBak[80];
 	uchar	st_data;
 	uchar	i;
-	uint16_t   	ii;
+	uint16_t  ii;
 
 	if (bitUseMoneyBlock)//1--用第1块数据为新余额，覆盖第2块数据
 		st_data=WrSector*4+2;
@@ -461,29 +482,29 @@ uchar	WriteBalanceToCard_M1(uchar bbit,uchar WrSector)//写卡
 	if (!bbit)//消费写入
 	{
 	    //钱包余额数据
-	   // memcpy(OldBalance,"\x99\x99\x99\x99",4);
-		iii=ChgBCDStringToUlong(OldBalance,4);
+	    // memcpy(OldBalance,"\x99\x99\x99\x99",4);
+		iii=ChgBCDStringToUlong(OldBalance, 4);
 		iii=iii-CurrentConsumMoney;	
-		ChgUlongToBCDString(iii,NewBalance,4);
-		memcpy(Buffer,NewBalance,4);//新余额
+		ChgUlongToBCDString(iii, NewBalance, 4);
+		memcpy(Buffer, NewBalance, 4);//新余额
 		if(Limit_MoneySign==1)//月累计消费额
 		{
-			if (memcmp(PurseConsumDateTime,SysTimeDatas.TimeString+1,1))//不是同一月
-				ChgUlongToBCDString(CurrentConsumMoney,Buffer+7,4);//钱包的日累计消费额
+			if (memcmp(PurseConsumDateTime, SysTimeDatas.TimeString+1, 1))//不是同一月
+				ChgUlongToBCDString(CurrentConsumMoney, Buffer+7, 4);//钱包的日累计消费额
 			else
 			{
 				iii=PurseSumConsumMoney+CurrentConsumMoney;
-				ChgUlongToBCDString(iii,Buffer+7,4);
+				ChgUlongToBCDString(iii, Buffer+7, 4);
 			}
 		}
 		else//累计消费额
 		{
-			if (memcmp(PurseConsumDateTime,SysTimeDatas.TimeString+1,2))//不是同一天
-				ChgUlongToBCDString(CurrentConsumMoney,Buffer+7,4);//钱包的日累计消费额
+			if (memcmp(PurseConsumDateTime, SysTimeDatas.TimeString+1, 2))//不是同一天
+				ChgUlongToBCDString(CurrentConsumMoney, Buffer+7, 4);//钱包的日累计消费额
 			else
 			{
 				iii=PurseSumConsumMoney+CurrentConsumMoney;
-				ChgUlongToBCDString(iii,Buffer+7,4);
+				ChgUlongToBCDString(iii, Buffer+7, 4);
 			}
 		}
 		//用卡次数
@@ -500,9 +521,7 @@ uchar	WriteBalanceToCard_M1(uchar bbit,uchar WrSector)//写卡
 		{
 			ii=GetU16_HiLo(PurseContrlNum)+1;
 			PutU16_HiLo(Buffer+11,ii);//卡流水号
-		}
-		else
-		{
+		} else {
 			memcpy(Buffer+11,PurseContrlNum,2);//卡流水号		
 		}
 		memcpy(Buffer+13,PurseBT_Num,2);//控制序列号
@@ -510,10 +529,7 @@ uchar	WriteBalanceToCard_M1(uchar bbit,uchar WrSector)//写卡
 		PurseWrBufferBak[0]=st_data;
 		memcpy(PurseWrBufferBak+1,Buffer,16);
 		memset(PurseWrBufferBak+17,0,7);
-	
-	}
-	else
-	{
+	} else {
 		memcpy(PurseWrBufferBak+1,PurseDatas_Info,16);
 	}
 	
@@ -551,13 +567,10 @@ uchar	WriteBalanceToCard_M1(uchar bbit,uchar WrSector)//写卡
 	else
 		status=CARD_NOCARD;
 
-
 	if (status)//写余额错误
 		 return	CONSUM_PROCE_FAIL;
-	
-	
 	if(!bbit)	
-	{	//		//日累计消费额
+	{	//日累计消费额
 		memcpy(Buffer,DaySumMoneyDatasBak,16);
 		if(Limit_MoneySign==1)
 		{
@@ -579,7 +592,6 @@ uchar	WriteBalanceToCard_M1(uchar bbit,uchar WrSector)//写卡
 		Buffer[11]=CardDayConsumCount;//价格方案时的计次
 		Buffer[15]=CalCheckSum(Buffer,15);
 		memcpy(MainWrBufferBak+1,Buffer,16);
-
 	}
 	else
 	   memcpy(MainWrBufferBak+1,DaySumMoneyDatasBak,16);
@@ -599,7 +611,7 @@ uchar	WriteBalanceToCard_M1(uchar bbit,uchar WrSector)//写卡
 				{
 					status=memcmp(MainWrBufferBak+1,BufferBak,16);
 					if (!status)
-							break;
+						break;
 				}
 			}
 		}
@@ -607,10 +619,10 @@ uchar	WriteBalanceToCard_M1(uchar bbit,uchar WrSector)//写卡
 	if (status)
 		return	CPU_WRITEPURSE_FAIL;
 	else
-		return	CARD_OK;
-	
+		return	CARD_OK;	
 }
-uchar	ReWriteCardSub_M1(uchar bbit)
+
+uchar ReWriteCardSub_M1(uchar bbit)
 {
 	uchar status;
 	uchar Buffer[16];
@@ -656,9 +668,7 @@ uchar	ReWriteCardSub_M1(uchar bbit)
 			}
 			if(status)
 				return	CONSUM_PROCE_FAIL;
-		}//写卡余额部分
-		else
-		{//只写累计时验证数据
+		} else {//写卡余额部分//只写累计时验证数据
 			status=CardAuthKeySub(1,PurseWrBufferBak[0]);
 			if (!status)	
 				status=MFRC522_Read(PurseWrBufferBak[0],Buffer);
@@ -673,16 +683,7 @@ uchar	ReWriteCardSub_M1(uchar bbit)
 						temp=PurseWrBufferBak[0]+1;
 					else
 						temp=PurseWrBufferBak[0]-1;
-					status=MFRC522_Read(temp,Buffer1);
-					if(!status)
-					{
-//						status=memcmp(Buffer,Buffer1,4);
-//						if(status==1)
-//							return CARD_SAME_ERROR;
-//						else
-//							status=0;
-					}
-					
+					status=MFRC522_Read(temp, Buffer1);	
 				}		
 			}
 			if(status)
@@ -706,10 +707,11 @@ uchar	Posi2[16]={10,8,5,1,13,7,11,0,3,14,6,2,15,4,9,12};
 uchar	Posi3[16]={0,2,9,13,5,15,3,8,6,11,10,14,7,12,1,4};
 uchar	Posi4[16]={0,14,1,6,15,4,8,12,7,2,10,9,13,3,11,5};
 
-void	ChgBytesSequence(uchar * Posi, uchar *ptr1 , uchar * ptr2,uchar Len)
+void ChgBytesSequence(uchar * Posi, uchar *ptr1 , uchar * ptr2, uchar Len)
 {
 	uchar	i;
 	uchar	aa,bb,st_data;
+
 	for (i=0;i<Len;i++)
 	{
 		aa=Posi[2*i];
