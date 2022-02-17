@@ -7,6 +7,7 @@ package main
 #include "readWriteCard.h"
 #include "rewrCardTask.h"
 #include "udp_data_analyse.h"
+#include "cAppTask.h"
 #cgo CFLAGS: -I./
 #cgo LDFLAGS: -L./ -lsqlite3  -lm
 */
@@ -107,7 +108,7 @@ func pos_read_msg_from_config_sqlite() {
 func pos_app_init() {
 
 	//创建配置数据库
-	C.sqlite_create_config_db()
+	//C.sqlite_create_config_db()
 	//创建消费记录数据库
 	//C.sqlite3_consume_open_db()
 
@@ -118,7 +119,7 @@ func pos_app_init() {
 	//创建黑名单数据库
 	//C.sqlite3_blaknumber_open_db()
 	//创建C多任务
-	//C.app_wrplate_create_thread()
+	C.app_wrplate_create_thread()
 	//udp_client_test()
 	//创建UDP连接
 	udp_client_task(deviceMsg.LocalIpaddr, deviceMsg.RemoteIpaddr, deviceMsg.Port)

@@ -345,7 +345,7 @@ int send_data_to_qt_direct(qtdata_t data_t)
 ==========================================================================================*/
 int send_data_to_qt_display(char *data)
 {
-  send_msg_data(qt_snd_msg_id,data, sizeof(data));
+  send_msg_data(qt_snd_msg_id,data, strlen(data));
 }
 /*=======================================================================================
 * 函 数 名： get_stop_write_palte_status
@@ -389,6 +389,7 @@ int receive_qt_msg_data_task(void)
   mymesg_t ckxmsg; 
   int rec_len = 0,i=0;
 
+  printf_debug("receive_qt_msg_data_task...\n");
   rec_len = msgrcv(qt_rec_msg_id, (void *)&ckxmsg, 512, RECQTKEYID, 0);
   if(rec_len < 0) {
     printf_debug("receive msg error \n");

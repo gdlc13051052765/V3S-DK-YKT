@@ -84,7 +84,7 @@ int sqlite_create_config_db(void)
   sqlite3 *config_db =NULL;
 
   /* 创建进程保护数据库 */
-  err = sqlite3_open("/home/meican/ykt_config.db",&config_db);
+  err = sqlite3_open("/root/ykt_config.db",&config_db);
   if( err ) {
     printf_debug("Can't open database: %s\n", sqlite3_errmsg(config_db));
     sqlite3_close(config_db);
@@ -98,7 +98,7 @@ int sqlite_create_config_db(void)
   sqlite3_close(config_db);
 
   //插入数据
-  err = sqlite3_open("/home/meican/ykt_config.db",&config_db);
+  err = sqlite3_open("/root/ykt_config.db",&config_db);
   if( err ) {
     printf_debug("Can't open database: %s\n", sqlite3_errmsg(config_db));
     sqlite3_close(config_db);
@@ -141,7 +141,7 @@ C_DevMsgSt sqlite_read_devMsg_from_config_db()
   C_DevMsgSt pdev ;
 
   /* 创建基础信息数据库 */
-  err = sqlite3_open_v2("/home/meican/ykt_config.db", &config_db, SQLITE_OPEN_READONLY, NULL);
+  err = sqlite3_open_v2("/root/ykt_config.db", &config_db, SQLITE_OPEN_READONLY, NULL);
   if( err ) {
     printf_debug("Can't open database: %s\n", sqlite3_errmsg(config_db));
     sqlite3_close_v2(config_db);
@@ -233,8 +233,8 @@ int sqlite_update_matchCode_config_db(char *snbuf)
   sqlite3 *config_db =NULL;
 
   /* 创建基础信息数据库 */
-  //err = sqlite3_open("/home/meican/base_config.db",&config_db);
-  err = sqlite3_open_v2("/home/meican/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
+  //err = sqlite3_open("/root/base_config.db",&config_db);
+  err = sqlite3_open_v2("/root/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
   if(err) {
     printf_debug("Can't open database: %s\n", sqlite3_errmsg(config_db));
     sqlite3_close_v2(config_db);
@@ -264,8 +264,8 @@ int sqlite_update_cardKeyCode_config_db(char *snbuf)
   sqlite3 *config_db =NULL;
 
   /* 创建基础信息数据库 */
-  //err = sqlite3_open("/home/meican/base_config.db",&config_db);
-  err = sqlite3_open_v2("/home/meican/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
+  //err = sqlite3_open("/root/base_config.db",&config_db);
+  err = sqlite3_open_v2("/root/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
   if(err) {
     printf_debug("Can't open database: %s\n", sqlite3_errmsg(config_db));
     sqlite3_close_v2(config_db);
@@ -295,8 +295,8 @@ int sqlite_update_cardSector_config_db(int cardSector)
   sqlite3 *config_db =NULL;
 
   /* 创建基础信息数据库 */
-  //err = sqlite3_open("/home/meican/base_config.db",&config_db);
-  err = sqlite3_open_v2("/home/meican/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
+  //err = sqlite3_open("/root/base_config.db",&config_db);
+  err = sqlite3_open_v2("/root/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
   if(err) {
     printf_debug("Can't open database: %s\n", sqlite3_errmsg(config_db));
     sqlite3_close_v2(config_db);
@@ -326,8 +326,8 @@ int sqlite_update_CalCardKey_config_db(char *CalCardKey)
   sqlite3 *config_db =NULL;
 
   /* 创建基础信息数据库 */
-  //err = sqlite3_open("/home/meican/base_config.db",&config_db);
-  err = sqlite3_open_v2("/home/meican/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
+  //err = sqlite3_open("/root/base_config.db",&config_db);
+  err = sqlite3_open_v2("/root/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
   if(err) {
     printf_debug("Can't open database: %s\n", sqlite3_errmsg(config_db));
     sqlite3_close_v2(config_db);
@@ -357,8 +357,8 @@ int sqlite_update_cardBatchEnable_config_db(char *cardBatchEnable)
   sqlite3 *config_db =NULL;
 
   /* 创建基础信息数据库 */
-  //err = sqlite3_open("/home/meican/base_config.db",&config_db);
-  err = sqlite3_open_v2("/home/meican/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
+  //err = sqlite3_open("/root/base_config.db",&config_db);
+  err = sqlite3_open_v2("/root/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
   if(err) {
     printf_debug("Can't open database: %s\n", sqlite3_errmsg(config_db));
     sqlite3_close_v2(config_db);
@@ -388,8 +388,8 @@ int sqlite_update_commEncryptKey_config_db(char *commEncryptKey)
   sqlite3 *config_db =NULL;
 
   /* 创建基础信息数据库 */
-  //err = sqlite3_open("/home/meican/base_config.db",&config_db);
-  err = sqlite3_open_v2("/home/meican/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
+  //err = sqlite3_open("/root/base_config.db",&config_db);
+  err = sqlite3_open_v2("/root/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
   if(err) {
     printf_debug("Can't open database: %s\n", sqlite3_errmsg(config_db));
     sqlite3_close_v2(config_db);
@@ -420,8 +420,8 @@ int sqlite_update_cardMinBalance_config_db(int cardMinBalance)
   sqlite3 *config_db =NULL;
 
   /* 创建基础信息数据库 */
-  //err = sqlite3_open("/home/meican/base_config.db",&config_db);
-  err = sqlite3_open_v2("/home/meican/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
+  //err = sqlite3_open("/root/base_config.db",&config_db);
+  err = sqlite3_open_v2("/root/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
   if(err) {
     printf_debug("Can't open database: %s\n", sqlite3_errmsg(config_db));
     sqlite3_close_v2(config_db);
@@ -451,8 +451,8 @@ int sqlite_update_cardEnableMonths_config_db(int cardEnableMonths)
   sqlite3 *config_db =NULL;
 
   /* 创建基础信息数据库 */
-  //err = sqlite3_open("/home/meican/base_config.db",&config_db);
-  err = sqlite3_open_v2("/home/meican/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
+  //err = sqlite3_open("/root/base_config.db",&config_db);
+  err = sqlite3_open_v2("/root/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
   if(err) {
     printf_debug("Can't open database: %s\n", sqlite3_errmsg(config_db));
     sqlite3_close_v2(config_db);
@@ -482,8 +482,8 @@ int sqlite_update_dayLimetMoney_config_db(int dayLimetMoney)
   sqlite3 *config_db =NULL;
 
   /* 创建基础信息数据库 */
-  //err = sqlite3_open("/home/meican/base_config.db",&config_db);
-  err = sqlite3_open_v2("/home/meican/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
+  //err = sqlite3_open("/root/base_config.db",&config_db);
+  err = sqlite3_open_v2("/root/ykt_config.db", &config_db, SQLITE_OPEN_READWRITE, NULL);
   if(err) {
     printf_debug("Can't open database: %s\n", sqlite3_errmsg(config_db));
     sqlite3_close_v2(config_db);

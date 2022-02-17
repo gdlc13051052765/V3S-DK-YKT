@@ -27,13 +27,14 @@ var version string = "YKT_APP_0.0.1"
 //主流程
 func main() {
 	fmt.Printf("MCT写盘器软件版本 == %s\n", version)
-	//创建C线程任务
-	C.app_wrplate_create_thread()
+
 	//初始化
 	pos_app_init()
+	time.Sleep(1 * time.Second)
 
-	for {
-		//主任务
-		time.Sleep(1 * time.Second)
-	}
+	// for {
+	// 	//主任务
+	// 	time.Sleep(1 * time.Second)
+		
+	// }
 }
